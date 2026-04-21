@@ -1,0 +1,19 @@
+﻿        function login() {
+            const username = document.getElementById("login-username").value.trim();
+            const password = document.getElementById("login-password").value;
+            const user = users.find(u => u.username === username && u.password === password);
+            if (!user) {
+                showToast("Invalid credentials", "error");
+                return;
+            }
+            currentUser = user;
+            showToast(`Welcome, ${user.name}!`);
+            renderAdmin();
+            showView("admin");
+        }
+
+        document.getElementById("btn-login").addEventListener("click", login);
+        document.getElementById("login-password").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") login();
+        });
+

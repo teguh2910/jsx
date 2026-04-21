@@ -1,0 +1,7 @@
+﻿@include('formbuilder.partials.views.pages.landing')
+@include('formbuilder.partials.views.pages.login')
+@include('formbuilder.partials.views.pages.fill-list')
+@include('formbuilder.partials.views.pages.fill-form')
+@include('formbuilder.partials.views.pages.track')
+@include('formbuilder.partials.views.pages.admin')
+@include('formbuilder.partials.views.pages.toast')

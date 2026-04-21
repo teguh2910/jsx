@@ -9,6 +9,47 @@
             setTimeout(() => toastEl.className = "toast hidden", 2500);
         }
 
+        async function apiRequest(path, options = {}) {
+            const method = options.method || "GET";
+            const headers = {
+                "Accept": "application/json",
+                ...options.headers,
+            };
+
+            const fetchOptions = {
+                method,
+                headers,
+                credentials: "same-origin",
+            };
+
+            if (options.body !== undefined) {
+                headers["Content-Type"] = "application/json";
+                headers["X-CSRF-TOKEN"] = csrfToken;
+                fetchOptions.body = JSON.stringify(options.body);
+            } else if (method !== "GET") {
+                headers["X-CSRF-TOKEN"] = csrfToken;
+            }
+
+            const res = await fetch(`${apiBase}${path}`, fetchOptions);
+            const raw = await res.text();
+            const data = raw ? JSON.parse(raw) : {};
+
+            if (!res.ok) {
+                const msg = data?.message || `Request failed (${res.status})`;
+                throw new Error(msg);
+            }
+
+            return data;
+        }
+
+        async function loadAppData() {
+            const data = await apiRequest("/bootstrap");
+            users = data.users || [];
+            depts = data.depts || [];
+            templates = data.templates || [];
+            submissions = data.submissions || [];
+        }
+
         function safeCalc(expr) {
             try {
                 const s = String(expr).replace(/[^0-9+\-*/().,%\s]/g, "");

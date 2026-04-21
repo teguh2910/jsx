@@ -87,7 +87,7 @@
             });
         }
 
-        function submitForm() {
+        async function submitForm() {
             if (!selectedTemplate) return;
             const name = document.getElementById("emp-name").value.trim();
             const email = document.getElementById("emp-email").value.trim();
@@ -108,7 +108,7 @@
             }
 
             const id = genSubId();
-            submissions.push({
+            const payload = {
                 id,
                 templateId: selectedTemplate.id,
                 templateName: selectedTemplate.name,
@@ -123,7 +123,18 @@
                 })),
                 status: (selectedTemplate.approvalFlow || []).length > 0 ? "in_review" : "approved",
                 submittedAt: new Date().toISOString(),
-            });
+            };
+
+            try {
+                await apiRequest("/submissions", {
+                    method: "POST",
+                    body: payload,
+                });
+                await loadAppData();
+            } catch (e) {
+                showToast(e.message || "Failed to submit form", "error");
+                return;
+            }
 
             document.getElementById("emp-name").value = "";
             document.getElementById("emp-email").value = "";

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FormBuilderApiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,6 +22,15 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('formbuilder');
 })->name('dashboard');
+
+Route::prefix('formbuilder/api')->group(function () {
+    Route::get('/bootstrap', [FormBuilderApiController::class, 'bootstrap']);
+    Route::get('/submissions/{id}', [FormBuilderApiController::class, 'showSubmission']);
+    Route::post('/submissions', [FormBuilderApiController::class, 'storeSubmission']);
+    Route::post('/templates', [FormBuilderApiController::class, 'saveTemplate']);
+    Route::post('/templates/{id}/toggle-publish', [FormBuilderApiController::class, 'toggleTemplatePublish']);
+    Route::delete('/templates/{id}', [FormBuilderApiController::class, 'deleteTemplate']);
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -25,21 +25,31 @@
                     btn.addEventListener("click", () => openTemplateEditor(btn.dataset.id));
                 });
                 content.querySelectorAll(".btn-toggle-template").forEach(btn => {
-                    btn.addEventListener("click", () => {
-                        const tpl = templates.find(t => t.id === btn.dataset.id);
-                        if (!tpl) return;
-                        tpl.published = !tpl.published;
-                        showToast(`Form ${tpl.published ? "published" : "unpublished"}`);
-                        renderAdmin();
+                    btn.addEventListener("click", async () => {
+                        try {
+                            await apiRequest(`/templates/${btn.dataset.id}/toggle-publish`, {
+                                method: "POST",
+                            });
+                            await loadAppData();
+                            showToast("Form status updated");
+                            renderAdmin();
+                        } catch (e) {
+                            showToast(e.message || "Failed to update publish status", "error");
+                        }
                     });
                 });
                 content.querySelectorAll(".btn-delete-template").forEach(btn => {
-                    btn.addEventListener("click", () => {
-                        const idx = templates.findIndex(t => t.id === btn.dataset.id);
-                        if (idx < 0) return;
-                        templates.splice(idx, 1);
-                        showToast("Form deleted");
-                        renderAdmin();
+                    btn.addEventListener("click", async () => {
+                        try {
+                            await apiRequest(`/templates/${btn.dataset.id}`, {
+                                method: "DELETE",
+                            });
+                            await loadAppData();
+                            showToast("Form deleted");
+                            renderAdmin();
+                        } catch (e) {
+                            showToast(e.message || "Failed to delete form", "error");
+                        }
                     });
                 });
                 return;

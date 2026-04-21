@@ -20,4 +20,13 @@
             });
         });
 
+        (async function initFormBuilderApp() {
+            try {
+                await loadAppData();
+                renderTemplateList();
+            } catch (e) {
+                showToast(e.message || "Failed to load app data", "error");
+            }
+        })();
+
 

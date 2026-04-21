@@ -29,7 +29,7 @@
             renderAdmin();
         }
 
-        function saveTemplateEditor() {
+        async function saveTemplateEditor() {
             if (!editorDraft.name.trim()) {
                 showToast("Form name is required", "error");
                 return;
@@ -39,9 +39,16 @@
                 return;
             }
 
-            const idx = templates.findIndex(t => t.id === editorDraft.id);
-            if (idx >= 0) templates[idx] = JSON.parse(JSON.stringify(editorDraft));
-            else templates.push(JSON.parse(JSON.stringify(editorDraft)));
+            try {
+                await apiRequest("/templates", {
+                    method: "POST",
+                    body: editorDraft,
+                });
+                await loadAppData();
+            } catch (e) {
+                showToast(e.message || "Failed to save form", "error");
+                return;
+            }
 
             adminPage = "forms";
             editorDraft = null;

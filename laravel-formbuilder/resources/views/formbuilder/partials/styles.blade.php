@@ -1,4 +1,4 @@
-﻿<style>
+<style>
         :root {
             --primary: #001A72;
             --white: #FFFFFF;
@@ -62,6 +62,10 @@
         .admin-wrap { min-height: 100vh; display: flex; }
         .admin-sidebar { width: 250px; background: var(--primary); color: var(--white); display: flex; flex-direction: column; }
         .admin-main { flex: 1; padding: 24px; overflow: auto; }
+        .my-layout { min-height: 100vh; display: flex; }
+        .my-sidebar { width: 250px; background: var(--primary); color: var(--white); display: flex; flex-direction: column; }
+        .my-main { flex: 1; overflow: auto; }
+        .my-main .my-container { max-width: none; margin: 24px; padding: 0; }
         .admin-nav-btn { width: 100%; text-align: left; border: none; border-radius: 8px; padding: 10px 12px; cursor: pointer; background: transparent; color: rgba(255,255,255,.75); font-weight: 600; }
         .admin-nav-btn.active { background: rgba(255,255,255,.15); color: #fff; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
@@ -71,4 +75,21 @@
         .editor-section { margin-bottom: 16px; }
         .field-row { border: 1px solid var(--gray-light); border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff; }
         .chip { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 11px; background: var(--light); color: var(--gray-dark); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+        .table-config-wrap { margin-top: 12px; padding: 12px; border: 1px solid var(--gray-light); border-radius: 10px; background: #F8FAFC; }
+        .table-config-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .table-config-grid { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden; }
+        .table-config-grid th, .table-config-grid td { padding: 8px; border-bottom: 1px solid var(--gray-light); text-align: left; vertical-align: middle; }
+        .table-config-grid thead th { background: #EEF2FF; color: var(--primary); font-weight: 700; }
+        .table-config-grid tbody tr:last-child td { border-bottom: none; }
+        .table-config-grid .cell-small { width: 56px; color: var(--gray); }
+        .table-config-grid .cell-actions { width: 96px; text-align: right; }
+        .btn-xs { border: none; border-radius: 6px; padding: 5px 8px; font-size: 12px; cursor: pointer; }
+        .btn-xs-danger { background: #FEE2E2; color: var(--danger); }
+        .btn-xs-primary { background: #DBEAFE; color: var(--accent); }
+        @media (max-width: 920px) {
+            .my-layout { flex-direction: column; }
+            .my-sidebar { width: 100%; }
+            .my-main .my-container { margin: 16px; }
+        }
     </style>

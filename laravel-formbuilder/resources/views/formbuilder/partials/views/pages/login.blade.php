@@ -1,9 +1,9 @@
-﻿    <div id="view-login" class="login-wrap hidden">
+    <div id="view-login" class="login-wrap hidden">
         <div class="card login-card">
             <div class="login-head">
-                <div class="login-icon">F</div>
-                <h2 class="login-title">Admin Login</h2>
-                <p class="login-sub">Sign in to manage forms and submissions</p>
+                <div class="login-icon">S</div>
+                <h2 class="login-title">SATU FORM</h2>
+                <p class="login-sub">Admin Login</p>
             </div>
             <div class="mb-18">
                 <label class="label">Username</label>
@@ -18,8 +18,7 @@
                 <button id="btn-back-home" class="btn btn-ghost" style="font-size:13px;"><- Back to Home</button>
             </div>
             <div class="demo-box">
-                <strong>Demo:</strong> superadmin / admin123 - hr.admin / hr123 - fin.admin / fin123
+                <strong>Demo:</strong> superadmin / admin123 - hr.admin / hr123 - staff1 / staff123
             </div>
         </div>
     </div>
-

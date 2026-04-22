@@ -1,4 +1,4 @@
-﻿<script>
+<script>
 @include('formbuilder.partials.scripts.shared.state')
 @include('formbuilder.partials.scripts.shared.helpers')
 @include('formbuilder.partials.scripts.pages.public-fill')
@@ -6,4 +6,5 @@
 @include('formbuilder.partials.scripts.pages.admin')
 @include('formbuilder.partials.scripts.pages.navigation-bindings')
 @include('formbuilder.partials.scripts.pages.auth')
+@include('formbuilder.partials.scripts.pages.my-submissions')
 </script>

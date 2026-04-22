@@ -1,4 +1,4 @@
-﻿            if (adminPage === "formEditor") {
+            if (adminPage === "formEditor") {
                 if (!editorDraft) {
                     adminPage = "forms";
                     renderAdmin();

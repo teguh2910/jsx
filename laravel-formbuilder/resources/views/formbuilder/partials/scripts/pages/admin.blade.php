@@ -1,4 +1,4 @@
-﻿@include('formbuilder.partials.scripts.pages.admin.core')
+@include('formbuilder.partials.scripts.pages.admin.core')
 @include('formbuilder.partials.scripts.pages.admin.dashboard')
 @include('formbuilder.partials.scripts.pages.admin.submissions')
 @include('formbuilder.partials.scripts.pages.admin.forms')

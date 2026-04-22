@@ -1,4 +1,4 @@
-﻿                    ${editorTab === "settings" ? `
+                    ${editorTab === "settings" ? `
                     <div class="card editor-section">
                         <h3 style="margin:0 0 12px;color:var(--primary);font-size:17px;">Form Dependency (Prerequisite)</h3>
                         <p style="margin:0 0 12px;color:var(--gray);font-size:13px;">Set a prerequisite form that must be submitted and approved before this form can be filled.</p>

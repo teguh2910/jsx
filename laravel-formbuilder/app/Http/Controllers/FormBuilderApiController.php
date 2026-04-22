@@ -16,17 +16,7 @@ class FormBuilderApiController extends Controller
     public function bootstrap()
     {
         return response()->json([
-            'users' => FormUser::query()->orderBy('id')->get()->map(function (FormUser $user) {
-                return [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'password' => $user->password,
-                    'role' => $user->role,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'department' => $user->department_id,
-                ];
-            }),
+            'users' => FormUser::query()->orderBy('id')->get()->map(fn (FormUser $user) => $this->mapUser($user)),
             'depts' => FormDepartment::query()->orderBy('name')->get()->map(function (FormDepartment $dept) {
                 return [
                     'id' => $dept->id,
@@ -37,6 +27,77 @@ class FormBuilderApiController extends Controller
             'templates' => FormTemplate::query()->with('fields')->orderBy('created_at')->get()->map(fn (FormTemplate $t) => $this->mapTemplate($t)),
             'submissions' => FormSubmission::query()->orderByDesc('submitted_at')->orderByDesc('created_at')->get()->map(fn (FormSubmission $s) => $this->mapSubmission($s)),
         ]);
+    }
+
+    public function saveUser(Request $request)
+    {
+        $payload = $request->validate([
+            'id' => ['nullable', 'integer', Rule::exists('form_users', 'id')],
+            'username' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('form_users', 'username')->ignore($request->input('id')),
+            ],
+            'password' => ['nullable', 'string', 'max:255'],
+            'role' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'department' => ['nullable', 'string', Rule::exists('form_departments', 'id')],
+        ]);
+
+        $isCreate = empty($payload['id']);
+        $role = strtolower(trim((string) ($payload['role'] ?? '')));
+
+        if ($isCreate && empty($payload['password'])) {
+            return response()->json([
+                'message' => 'Password is required for new user.',
+            ], 422);
+        }
+
+        if ($role !== 'superadmin' && empty($payload['department'])) {
+            return response()->json([
+                'message' => 'Department is required for non-superadmin user.',
+            ], 422);
+        }
+
+        $user = $isCreate
+            ? new FormUser()
+            : FormUser::query()->findOrFail((int) $payload['id']);
+
+        $user->username = $payload['username'];
+        $user->role = $role;
+        $user->name = $payload['name'];
+        $user->email = $payload['email'] ?? null;
+        $user->department_id = $role === 'superadmin'
+            ? null
+            : ($payload['department'] ?? null);
+
+        if (!empty($payload['password'])) {
+            $user->password = $payload['password'];
+        }
+
+        $user->save();
+
+        return response()->json([
+            'ok' => true,
+            'user' => $this->mapUser($user),
+        ]);
+    }
+
+    public function deleteUser(int $id)
+    {
+        $user = FormUser::query()->findOrFail($id);
+
+        if ($user->role === 'superadmin') {
+            return response()->json([
+                'message' => 'Superadmin user cannot be deleted.',
+            ], 422);
+        }
+
+        $user->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     public function saveTemplate(Request $request)
@@ -50,9 +111,7 @@ class FormBuilderApiController extends Controller
             'prerequisiteFormId' => ['nullable', 'string'],
             'approvalFlow' => ['nullable', 'array'],
             'approvalFlow.*.id' => ['nullable', 'string', 'max:100'],
-            'approvalFlow.*.name' => ['nullable', 'string', 'max:255'],
-            'approvalFlow.*.email' => ['nullable', 'string', 'max:255'],
-            'approvalFlow.*.title' => ['nullable', 'string', 'max:255'],
+            'approvalFlow.*.role' => ['nullable', 'string', 'max:100'],
             'fields' => ['nullable', 'array'],
             'fields.*.id' => ['required', 'string', 'max:100'],
             'fields.*.type' => ['required', 'string', 'max:50'],
@@ -61,6 +120,7 @@ class FormBuilderApiController extends Controller
             'fields.*.options' => ['nullable', 'array'],
             'fields.*.formula' => ['nullable', 'string'],
             'fields.*.tableColumns' => ['nullable', 'array'],
+            'fields.*.tableRows' => ['nullable', 'integer', 'min:1', 'max:200'],
         ]);
 
         DB::transaction(function () use ($payload) {
@@ -86,6 +146,7 @@ class FormBuilderApiController extends Controller
                     'options' => $field['options'] ?? null,
                     'formula' => $field['formula'] ?? null,
                     'table_columns' => $field['tableColumns'] ?? null,
+                    'table_rows' => $field['tableRows'] ?? null,
                     'sort_order' => $index,
                 ]);
             }
@@ -122,22 +183,59 @@ class FormBuilderApiController extends Controller
     {
         $payload = $request->validate([
             'id' => ['required', 'string', 'max:100'],
-            'templateId' => ['nullable', 'string'],
+            'templateId' => ['required', 'string'],
             'templateName' => ['required', 'string', 'max:255'],
             'department' => ['nullable', 'string'],
             'employeeName' => ['required', 'string', 'max:255'],
             'employeeEmail' => ['required', 'email', 'max:255'],
             'data' => ['nullable', 'array'],
+            'prerequisiteSubmissionId' => ['nullable', 'string', 'max:100'],
             'approvalSteps' => ['nullable', 'array'],
             'status' => ['required', 'string', 'max:50'],
             'submittedAt' => ['nullable', 'date'],
         ]);
 
+        $template = FormTemplate::query()->find($payload['templateId']);
+        if (!$template) {
+            return response()->json([
+                'message' => 'Template not found.',
+            ], 422);
+        }
+
+        if (!empty($template->prerequisite_form_id)) {
+            $prerequisiteSubmissionId = strtoupper(trim((string) ($payload['prerequisiteSubmissionId'] ?? '')));
+            if ($prerequisiteSubmissionId === '') {
+                return response()->json([
+                    'message' => 'Prerequisite submission ID is required for this form.',
+                ], 422);
+            }
+
+            $prereqSubmission = FormSubmission::query()->find($prerequisiteSubmissionId);
+            if (!$prereqSubmission) {
+                return response()->json([
+                    'message' => 'Prerequisite submission ID not found.',
+                ], 422);
+            }
+
+            if ($prereqSubmission->template_id !== $template->prerequisite_form_id) {
+                $prereqTemplate = FormTemplate::query()->find($template->prerequisite_form_id);
+                return response()->json([
+                    'message' => 'Submission ID is not from required prerequisite form: ' . ($prereqTemplate?->name ?? $template->prerequisite_form_id),
+                ], 422);
+            }
+
+            if ($prereqSubmission->status !== 'approved') {
+                return response()->json([
+                    'message' => 'Prerequisite submission is not approved yet.',
+                ], 422);
+            }
+        }
+
         $submission = FormSubmission::query()->create([
             'id' => $payload['id'],
-            'template_id' => $payload['templateId'] ?? null,
-            'template_name' => $payload['templateName'],
-            'department_id' => $payload['department'] ?? null,
+            'template_id' => $template->id,
+            'template_name' => $template->name,
+            'department_id' => $template->department_id,
             'employee_name' => $payload['employeeName'],
             'employee_email' => $payload['employeeEmail'],
             'data' => $payload['data'] ?? [],
@@ -165,6 +263,81 @@ class FormBuilderApiController extends Controller
         ]);
     }
 
+    public function reviewSubmission(Request $request, string $id)
+    {
+        $payload = $request->validate([
+            'action' => ['required', Rule::in(['approved', 'rejected'])],
+            'reviewerRole' => ['required', 'string', 'max:100'],
+            'reviewerName' => ['nullable', 'string', 'max:255'],
+            'comments' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $submission = FormSubmission::query()->findOrFail($id);
+        $steps = $submission->approval_steps ?? [];
+
+        if (!is_array($steps) || count($steps) === 0) {
+            return response()->json([
+                'message' => 'This submission has no approval steps.',
+            ], 422);
+        }
+
+        $activeIndex = null;
+        foreach ($steps as $index => $step) {
+            if (($step['status'] ?? null) === 'in_review') {
+                $activeIndex = $index;
+                break;
+            }
+        }
+
+        if ($activeIndex === null) {
+            return response()->json([
+                'message' => 'No active approval step found.',
+            ], 422);
+        }
+
+        $reviewerRole = strtolower(trim((string) $payload['reviewerRole']));
+        $requiredRole = strtolower(trim((string) ($steps[$activeIndex]['role'] ?? '')));
+
+        if ($reviewerRole !== 'superadmin' && $requiredRole !== '' && $reviewerRole !== $requiredRole) {
+            return response()->json([
+                'message' => 'You are not allowed to review this step.',
+            ], 403);
+        }
+
+        $now = now()->toISOString();
+        $steps[$activeIndex]['status'] = $payload['action'];
+        $steps[$activeIndex]['reviewedAt'] = $now;
+        $steps[$activeIndex]['reviewedBy'] = $payload['reviewerName'] ?? null;
+        $steps[$activeIndex]['comments'] = $payload['comments'] ?? '';
+
+        if ($payload['action'] === 'approved') {
+            $nextPendingIndex = null;
+            for ($i = $activeIndex + 1; $i < count($steps); $i++) {
+                if (($steps[$i]['status'] ?? null) === 'pending') {
+                    $nextPendingIndex = $i;
+                    break;
+                }
+            }
+
+            if ($nextPendingIndex !== null) {
+                $steps[$nextPendingIndex]['status'] = 'in_review';
+                $submission->status = 'in_review';
+            } else {
+                $submission->status = 'approved';
+            }
+        } else {
+            $submission->status = 'rejected';
+        }
+
+        $submission->approval_steps = $steps;
+        $submission->save();
+
+        return response()->json([
+            'ok' => true,
+            'submission' => $this->mapSubmission($submission->fresh()),
+        ]);
+    }
+
     private function mapTemplate(FormTemplate $template): array
     {
         return [
@@ -184,8 +357,22 @@ class FormBuilderApiController extends Controller
                     'options' => $field->options,
                     'formula' => $field->formula,
                     'tableColumns' => $field->table_columns,
+                    'tableRows' => $field->table_rows,
                 ];
             })->all(),
+        ];
+    }
+
+    private function mapUser(FormUser $user): array
+    {
+        return [
+            'id' => $user->id,
+            'username' => $user->username,
+            'password' => $user->password,
+            'role' => $user->role,
+            'name' => $user->name,
+            'email' => $user->email,
+            'department' => $user->department_id,
         ];
     }
 

@@ -1,4 +1,4 @@
-﻿                    ${editorTab === "fields" ? `
+                    ${editorTab === "fields" ? `
                     <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;">
                         <div class="card">
                             <h4 style="margin:0 0 12px;font-size:14px;color:var(--primary)">Add Field</h4>
@@ -54,8 +54,50 @@
                                             </div>
                                         ` : ""}
                                         ${f.type === "table" ? `
-                                            <div style="margin-top:12px;padding:12px;background:#DBEAFE;border-radius:8px;font-size:12px;color:var(--primary)">
-                                                Table field uses default editable columns (Item, Qty, Price, Total).
+                                            <div class="table-config-wrap">
+                                                <div style="display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:end;margin-bottom:10px;">
+                                                    <div>
+                                                        <label class="label">Default Rows</label>
+                                                        <input type="number" min="1" max="200" class="input ed-table-rows" data-id="${f.id}" value="${getTableRowCount(f, 3)}">
+                                                    </div>
+                                                    <div class="muted" style="font-size:12px;">Set column name and type below.</div>
+                                                </div>
+                                                <div class="table-config-head">
+                                                    <div style="font-size:12px;color:var(--primary);font-weight:700;">Table Columns</div>
+                                                    <button class="btn-xs btn-xs-primary btn-add-table-col" data-id="${f.id}" type="button">+ Add Column</button>
+                                                </div>
+                                                <table class="table-config-grid">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="cell-small">#</th>
+                                                            <th>Column Name</th>
+                                                            <th style="width:140px;">Type</th>
+                                                            <th class="cell-actions">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${getTableColumnsForPreview(f).map((col, ci) => `
+                                                            <tr>
+                                                                <td class="cell-small">${ci + 1}</td>
+                                                                <td>
+                                                                    <input class="input ed-table-col-name" data-id="${f.id}" data-col-index="${ci}" value="${escapeHtml(col.name || "")}" placeholder="Column name">
+                                                                </td>
+                                                                <td>
+                                                                    <select class="input ed-table-col-type" data-id="${f.id}" data-col-index="${ci}">
+                                                                        ${["text", "number", "date", "calc"].map(type => `
+                                                                            <option value="${type}" ${String(col.type || "text") === type ? "selected" : ""}>${type.toUpperCase()}</option>
+                                                                        `).join("")}
+                                                                    </select>
+                                                                </td>
+                                                                <td class="cell-actions">
+                                                                    <button class="btn-xs btn-xs-danger btn-remove-table-col" data-id="${f.id}" data-col-index="${ci}" type="button">Delete</button>
+                                                                </td>
+                                                            </tr>
+                                                        `).join("")}
+                                                    </tbody>
+                                                </table>
+                                                <div style="font-size:12px;color:var(--primary);font-weight:600;margin:10px 0 6px;">Table Preview</div>
+                                                ${renderTableFieldPreview(f, { compact: true })}
                                             </div>
                                         ` : ""}
                                     </div>
@@ -65,4 +107,3 @@
                         </div>
                     </div>
                     ` : ""}
-

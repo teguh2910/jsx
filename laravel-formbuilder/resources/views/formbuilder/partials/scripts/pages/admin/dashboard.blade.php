@@ -1,4 +1,4 @@
-﻿            if (adminPage === "dashboard") {
+            if (adminPage === "dashboard") {
                 const pending = allowedSubs.filter(s => s.status === "pending" || s.status === "in_review").length;
                 const approved = allowedSubs.filter(s => s.status === "approved").length;
                 const rejected = allowedSubs.filter(s => s.status === "rejected").length;

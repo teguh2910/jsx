@@ -1,8 +1,9 @@
-﻿        function getAdminData() {
-            const allowedTemplates = currentUser && currentUser.role === "superadmin"
+        function getAdminData() {
+            const isSuperadmin = currentUser && currentUser.role === "superadmin";
+            const allowedTemplates = isSuperadmin
                 ? templates
                 : templates.filter(t => t.department === currentUser.department || !t.department);
-            const allowedSubs = currentUser && currentUser.role === "superadmin"
+            const allowedSubs = isSuperadmin
                 ? submissions
                 : submissions.filter(s => s.department === currentUser.department || !s.department);
             return { allowedTemplates, allowedSubs };
@@ -58,12 +59,9 @@
 
         function renderAdmin() {
             if (!currentUser) return;
-            const roleLabel = currentUser.role === "superadmin" ? "Super Administrator" : "Dept. Admin";
+            const roleLabel = currentUser.role.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
             document.getElementById("admin-user-name").textContent = currentUser.name;
             document.getElementById("admin-user-role").textContent = roleLabel;
-            if (currentUser.role !== "superadmin" && (adminPage === "departments" || adminPage === "users")) {
-                adminPage = "dashboard";
-            }
 
             const navBtns = [...document.querySelectorAll("[data-admin-page]")];
             navBtns.forEach(btn => {

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Models;
 
@@ -22,6 +22,7 @@ class FormField extends Model
         'options',
         'formula',
         'table_columns',
+        'table_rows',
         'sort_order',
     ];
 
@@ -29,5 +30,6 @@ class FormField extends Model
         'required' => 'boolean',
         'options' => 'array',
         'table_columns' => 'array',
+        'table_rows' => 'integer',
     ];
 }

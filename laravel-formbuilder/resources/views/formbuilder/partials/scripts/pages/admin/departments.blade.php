@@ -1,4 +1,4 @@
-﻿            if (adminPage === "departments") {
+            if (adminPage === "departments") {
                 content.innerHTML = `
                     <h2 style="margin:0 0 16px;color:var(--primary)">Departments</h2>
                     <div class="grid">

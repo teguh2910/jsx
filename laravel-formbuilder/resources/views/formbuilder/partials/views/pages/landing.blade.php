@@ -1,14 +1,14 @@
-﻿<div id="view-landing" class="landing-wrap">
+<div id="view-landing" class="landing-wrap">
         <nav class="landing-nav">
             <div class="brand">
-                <div class="brand-logo">F</div>
-                <span class="brand-text">FormFlow</span>
+                <div class="brand-logo">S</div>
+                <span class="brand-text">SATU FORM</span>
             </div>
             <button id="btn-open-login" class="btn btn-outline" style="border-color: rgba(255,255,255,.3); color: #fff;">Admin Login</button>
         </nav>
         <div class="landing-main">
             <div class="landing-inner">
-                <h1 class="landing-title">Digital Form<br>Management System</h1>
+                <h1 class="landing-title">SATU FORM<br>Management System</h1>
                 <p class="landing-sub">Submit forms, track approvals, manage workflows. No login required for submissions.</p>
                 <div class="landing-actions">
                     <button id="btn-open-fill" class="btn btn-primary" style="background:#fff;color:var(--primary)">Submit a Form</button>
@@ -23,4 +23,3 @@
             </div>
         </div>
     </div>
-

@@ -17,6 +17,15 @@
                 return;
             }
             currentUser = user;
+            persistCurrentUserSession(user);
+
+            // non_admin goes to personal portal
+            if (user.role === "non_admin") {
+                showToast(`Welcome, ${user.name}!`);
+                showView("mySubmissions");
+                return;
+            }
+
             showToast(`Welcome, ${user.name}!`);
             renderAdmin();
             showView("admin");

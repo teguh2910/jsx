@@ -1,5 +1,6 @@
-﻿        const apiBase = "/formbuilder/api";
+        const apiBase = "/formbuilder/api";
         const csrfToken = "{{ csrf_token() }}";
+        const authStorageKey = "formbuilder_auth_user";
 
         let users = [];
         let depts = [];
@@ -27,6 +28,7 @@
             fillForm: document.getElementById("view-fill-form"),
             track: document.getElementById("view-track"),
             admin: document.getElementById("view-admin"),
+            mySubmissions: document.getElementById("view-my-submissions"),
         };
 
         const toastEl = document.getElementById("toast");

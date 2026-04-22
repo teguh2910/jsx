@@ -1,4 +1,4 @@
-﻿    <div id="view-track" class="page-wrap hidden">
+    <div id="view-track" class="page-wrap hidden">
         <div class="topbar">
             <button id="btn-track-back" class="btn btn-ghost" style="color:#fff;padding:6px 12px;"><- Back</button>
             <strong>Track Submission</strong>

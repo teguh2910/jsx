@@ -1,4 +1,4 @@
-﻿            if (adminPage === "forms") {
+            if (adminPage === "forms") {
                 content.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h2 style="margin:0;color:var(--primary)">Forms</h2>

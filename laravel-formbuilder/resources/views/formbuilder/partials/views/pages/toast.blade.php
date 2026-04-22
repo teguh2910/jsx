@@ -1,2 +1,2 @@
-﻿    <div id="toast" class="toast hidden"></div>
+    <div id="toast" class="toast hidden"></div>
 

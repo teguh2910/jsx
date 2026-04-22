@@ -12,10 +12,11 @@
             </div>
             <nav style="padding:12px;display:flex;flex-direction:column;gap:6px;flex:1;">
                 <button class="admin-nav-btn active" data-admin-page="dashboard">Dashboard</button>
-                <button class="admin-nav-btn" data-admin-page="submissions">Submissions</button>
-                <button class="admin-nav-btn" data-admin-page="forms">Forms</button>
-                <button class="admin-nav-btn" data-admin-page="tracking">Tracking</button>
+                <button class="admin-nav-btn" data-admin-page="submit-form">Submit Form</button>
                 <button class="admin-nav-btn" data-admin-page="my-submissions">My Submission</button>
+                <button class="admin-nav-btn" data-admin-page="forms">FORM List</button>
+                <button class="admin-nav-btn" data-admin-page="submissions">Submission</button>
+                <button class="admin-nav-btn" data-admin-page="tracking">Tracking</button>
                 <button class="admin-nav-btn" data-admin-page="departments">Departments</button>
                 <button class="admin-nav-btn" data-admin-page="users">Users</button>
             </nav>

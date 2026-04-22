@@ -1,4 +1,5 @@
         let verifiedPrerequisiteSubmissionId = null;
+        let internalApproverSelections = {};
 
         function renderTemplateList() {
             const listEl = document.getElementById("template-list-grouped");
@@ -42,6 +43,7 @@
                     selectedTemplate = templates.find(t => t.id === el.dataset.id);
                     formData = {};
                     verifiedPrerequisiteSubmissionId = null;
+                    internalApproverSelections = {};
                     renderDynamicFields();
                     document.getElementById("selected-form-title").textContent = selectedTemplate.name;
                     showView("fillForm");
@@ -68,6 +70,8 @@
             const prereqHelp = document.getElementById("prereq-check-help");
             const prereqInput = document.getElementById("prereq-submission-id");
             const prereqResult = document.getElementById("prereq-check-result");
+            const internalApproverSection = document.getElementById("internal-approver-section");
+            const internalApproverList = document.getElementById("internal-approver-list");
             const submitBtn = document.getElementById("btn-submit-form");
 
             if (selectedTemplate?.prerequisiteFormId) {
@@ -96,6 +100,37 @@
                 submitBtn.disabled = false;
                 submitBtn.classList.remove("hidden");
                 wrap.classList.remove("hidden");
+            }
+
+            const internalApprovalFlow = (selectedTemplate?.approvalFlow || []).filter(a => (a.approvalType || "internal") !== "external");
+            const approverCandidates = (users || []).filter(u => (u.role || "").toLowerCase() !== "non_admin");
+            if (internalApprovalFlow.length > 0) {
+                internalApproverSection.classList.remove("hidden");
+                if (approverCandidates.length === 0) {
+                    internalApproverList.innerHTML = `<p class="muted">No approver user available.</p>`;
+                } else {
+                    internalApproverList.innerHTML = internalApprovalFlow.map((a, i) => {
+                        const levelLabel = a.role || `Superior Level ${i + 1}`;
+                        const selectedUsername = internalApproverSelections[a.id] || "";
+                        return `
+                            <div style="margin-bottom:10px;">
+                                <label class="label">${escapeHtml(levelLabel)} *</label>
+                                <select class="input public-internal-approver" data-step-id="${a.id}">
+                                    <option value="">Select approver</option>
+                                    ${approverCandidates.map(u => `<option value="${escapeHtml(u.username)}" ${selectedUsername === u.username ? "selected" : ""}>${escapeHtml(u.name)} (${escapeHtml(u.username)})</option>`).join("")}
+                                </select>
+                            </div>
+                        `;
+                    }).join("");
+                    internalApproverList.querySelectorAll(".public-internal-approver").forEach(el => {
+                        el.addEventListener("change", () => {
+                            internalApproverSelections[el.dataset.stepId] = el.value || "";
+                        });
+                    });
+                }
+            } else {
+                internalApproverSection.classList.add("hidden");
+                internalApproverList.innerHTML = "";
             }
 
             selectedTemplate.fields.forEach((field) => {
@@ -220,6 +255,15 @@
                 }
             }
 
+            const internalApprovalFlow = (selectedTemplate.approvalFlow || []).filter(a => (a.approvalType || "internal") !== "external");
+            for (const step of internalApprovalFlow) {
+                const approverUsername = (internalApproverSelections[step.id] || "").trim();
+                if (!approverUsername) {
+                    showToast(`Please select approver for ${step.role || "internal step"}`, "error");
+                    return;
+                }
+            }
+
             const id = genSubId();
             const payload = {
                 id,
@@ -231,8 +275,22 @@
                 data: { ...formData },
                 prerequisiteSubmissionId,
                 approvalSteps: (selectedTemplate.approvalFlow || []).map((a, i) => ({
+                    ...(function() {
+                        const approvalType = a.approvalType === "external" ? "external" : "internal";
+                        const approverUsername = approvalType === "internal"
+                            ? (internalApproverSelections[a.id] || "").trim()
+                            : ((users || []).find(u => u.name === (a.role || ""))?.username || null);
+                        const approverUser = approverUsername
+                            ? (users || []).find(u => u.username === approverUsername)
+                            : null;
+                        return {
+                            approverUsername: approverUsername || null,
+                            approverName: approverUser?.name || (approvalType === "external" ? (a.role || null) : null),
+                        };
+                    })(),
                     id: a.id || `APR-${i + 1}`,
                     role: a.role || a.title || a.name || "spv",
+                    approvalType: a.approvalType === "external" ? "external" : "internal",
                     order: i,
                     status: i === 0 ? "in_review" : "pending",
                 })),
@@ -256,6 +314,7 @@
             selectedTemplate = null;
             formData = {};
             verifiedPrerequisiteSubmissionId = null;
+            internalApproverSelections = {};
             renderTemplateList();
             showView("fillList");
             showToast(`Form submitted. Tracking ID: ${id}`);

@@ -181,6 +181,11 @@
                                 <div style="font-weight:600;color:var(--primary);">Step ${index + 1}: ${escapeHtml(step.role || "-")}</div>
                                 <span class="badge ${badgeClass(step.status)}">${statusLabel(step.status)}</span>
                             </div>
+                            ${step.approverName ? `
+                                <div class="muted" style="margin-top:8px;font-size:12px;">
+                                    Approver: ${escapeHtml(step.approverName)}
+                                </div>
+                            ` : ""}
                             ${(step.reviewedBy || step.reviewedAt) ? `
                                 <div class="muted" style="margin-top:8px;font-size:12px;">
                                     Reviewed by ${escapeHtml(step.reviewedBy || "-")} at ${formatDateTime(step.reviewedAt)}

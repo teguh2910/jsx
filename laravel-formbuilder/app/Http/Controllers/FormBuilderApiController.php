@@ -112,6 +112,8 @@ class FormBuilderApiController extends Controller
             'approvalFlow' => ['nullable', 'array'],
             'approvalFlow.*.id' => ['nullable', 'string', 'max:100'],
             'approvalFlow.*.role' => ['nullable', 'string', 'max:100'],
+            'approvalFlow.*.approvalType' => ['nullable', Rule::in(['internal', 'external'])],
+            'approvalFlow.*.internalLevel' => ['nullable', 'integer', 'min:1', 'max:8'],
             'fields' => ['nullable', 'array'],
             'fields.*.id' => ['required', 'string', 'max:100'],
             'fields.*.type' => ['required', 'string', 'max:50'],
@@ -268,6 +270,7 @@ class FormBuilderApiController extends Controller
         $payload = $request->validate([
             'action' => ['required', Rule::in(['approved', 'rejected'])],
             'reviewerRole' => ['required', 'string', 'max:100'],
+            'reviewerUsername' => ['nullable', 'string', 'max:100'],
             'reviewerName' => ['nullable', 'string', 'max:255'],
             'comments' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -296,12 +299,21 @@ class FormBuilderApiController extends Controller
         }
 
         $reviewerRole = strtolower(trim((string) $payload['reviewerRole']));
+        $reviewerUsername = strtolower(trim((string) ($payload['reviewerUsername'] ?? '')));
         $requiredRole = strtolower(trim((string) ($steps[$activeIndex]['role'] ?? '')));
+        $requiredApproverUsername = strtolower(trim((string) ($steps[$activeIndex]['approverUsername'] ?? '')));
 
-        if ($reviewerRole !== 'superadmin' && $requiredRole !== '' && $reviewerRole !== $requiredRole) {
-            return response()->json([
-                'message' => 'You are not allowed to review this step.',
-            ], 403);
+        if ($reviewerRole !== 'superadmin') {
+            if ($requiredApproverUsername !== '' && $reviewerUsername !== $requiredApproverUsername) {
+                return response()->json([
+                    'message' => 'You are not allowed to review this step.',
+                ], 403);
+            }
+            if ($requiredApproverUsername === '' && $requiredRole !== '' && $reviewerRole !== $requiredRole) {
+                return response()->json([
+                    'message' => 'You are not allowed to review this step.',
+                ], 403);
+            }
         }
 
         $now = now()->toISOString();

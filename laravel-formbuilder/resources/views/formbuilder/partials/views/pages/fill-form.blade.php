@@ -22,6 +22,10 @@
                     </div>
                     <div id="prereq-check-result" style="margin-top:8px;font-size:13px;"></div>
                 </div>
+                <div id="internal-approver-section" class="hidden" style="margin-bottom:14px;padding:12px;background:#F8FAFC;border:1px solid var(--gray-light);border-radius:10px;">
+                    <div style="font-weight:600;color:var(--primary);margin-bottom:8px;">Internal Approval Assignment</div>
+                    <div id="internal-approver-list"></div>
+                </div>
                 <div id="dynamic-fields"></div>
                 <button id="btn-submit-form" class="btn btn-primary">Submit Form</button>
             </div>

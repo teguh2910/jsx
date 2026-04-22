@@ -4,8 +4,12 @@
                     const step = getActiveStep(submission);
                     if (!step || !currentUser) return false;
                     const userRole = String(currentUser.role || "").toLowerCase();
+                    const currentUsername = String(currentUser.username || "").toLowerCase();
                     const stepRole = String(step.role || "").toLowerCase();
-                    return userRole === "superadmin" || (stepRole !== "" && userRole === stepRole);
+                    const stepApproverUsername = String(step.approverUsername || "").toLowerCase();
+                    if (userRole === "superadmin") return true;
+                    if (stepApproverUsername !== "") return currentUsername === stepApproverUsername;
+                    return stepRole !== "" && userRole === stepRole;
                 };
                 const renderSubmissionDetail = (submission) => {
                     const tpl = templates.find(t => t.id === submission.templateId);
@@ -112,6 +116,7 @@
                             body: {
                                 action,
                                 reviewerRole: currentUser.role,
+                                reviewerUsername: currentUser.username,
                                 reviewerName: currentUser.name,
                                 comments: "",
                             },
@@ -273,6 +278,11 @@
                 const btnAdminMyNewForm = document.getElementById("btn-admin-my-new-form");
                 if (btnAdminMyNewForm) {
                     btnAdminMyNewForm.addEventListener("click", () => {
+                        if (currentUser && currentUser.role === "admin_department") {
+                            adminPage = "submit-form";
+                            renderAdmin();
+                            return;
+                        }
                         showView("mySubmissions");
                         if (typeof showMyView === "function") {
                             showMyView("myFormList");

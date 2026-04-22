@@ -6,8 +6,8 @@
                     <div class="muted" style="color:rgba(255,255,255,.75);margin-top:4px;">My Menu</div>
                 </div>
                 <nav style="padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;">
-                    <button id="btn-my-menu-subs" class="admin-nav-btn active" type="button">My Submissions</button>
-                    <button id="btn-my-menu-track" class="admin-nav-btn" type="button">Tracking</button>
+                    <button id="btn-my-menu-submit" class="admin-nav-btn" type="button">Submit Form</button>
+                    <button id="btn-my-menu-subs" class="admin-nav-btn active" type="button">My Submission</button>
                 </nav>
                 <div style="padding:12px;">
                     <button id="btn-my-subs-logout" class="btn btn-ghost" style="width:100%;color:#fff;background:rgba(255,255,255,.08);">Logout</button>
@@ -27,6 +27,18 @@
                     <h3 style="margin:0;color:var(--primary)">Available Forms</h3>
                     <button id="btn-my-form-list-back" class="btn btn-ghost"><- Back</button>
                 </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                    <div style="min-width:220px;flex:1;">
+                        <label class="label">Departement Penerbit Form</label>
+                        <select id="my-form-filter-department" class="input">
+                            <option value="">All Department</option>
+                        </select>
+                    </div>
+                    <div style="min-width:260px;flex:2;">
+                        <label class="label">Search Nama Form</label>
+                        <input id="my-form-search-name" class="input" type="text" placeholder="Cari nama form...">
+                    </div>
+                </div>
                 <div id="my-form-list" class="grid"></div>
             </div>
 
@@ -44,6 +56,10 @@
                         <button id="btn-my-prereq-check" type="button" class="btn btn-outline">Check ID</button>
                     </div>
                     <div id="my-prereq-check-result" style="margin-top:8px;font-size:13px;"></div>
+                </div>
+                <div id="my-internal-approver-section" class="hidden" style="margin-bottom:14px;padding:12px;background:#F8FAFC;border:1px solid var(--gray-light);border-radius:10px;">
+                    <div style="font-weight:600;color:var(--primary);margin-bottom:8px;">Internal Approval Assignment</div>
+                    <div id="my-internal-approver-list"></div>
                 </div>
                 <div id="my-dynamic-fields"></div>
                 <div style="margin-top:20px;display:flex;gap:10px;">
@@ -75,6 +91,17 @@
                         </div>
                     </div>
                     <div id="my-sub-detail-body"></div>
+                </div>
+            </div>
+
+            <!-- Progress Status Modal -->
+            <div id="my-progress-modal" class="modal-overlay hidden">
+                <div class="card" style="max-width:760px;width:100%;max-height:90vh;overflow:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <h3 id="my-progress-title" style="margin:0;color:var(--primary);">Progress Status</h3>
+                        <button id="btn-my-progress-close" class="btn btn-ghost">Close</button>
+                    </div>
+                    <div id="my-progress-body"></div>
                 </div>
             </div>
                 </div>

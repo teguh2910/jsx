@@ -3,13 +3,16 @@
         let myFormData = {};
         let mySelectedTemplate = null;
         let myVerifiedPrerequisiteSubmissionId = null;
+        let myInternalApproverSelections = {};
+        let myFormDepartmentFilter = "";
+        let myFormSearchQuery = "";
 
         function setMyMenuActive(section) {
+            const submitBtn = document.getElementById("btn-my-menu-submit");
             const subsBtn = document.getElementById("btn-my-menu-subs");
-            const trackBtn = document.getElementById("btn-my-menu-track");
-            if (!subsBtn || !trackBtn) return;
+            if (!submitBtn || !subsBtn) return;
+            submitBtn.classList.toggle("active", section === "submit");
             subsBtn.classList.toggle("active", section === "submissions");
-            trackBtn.classList.toggle("active", section === "tracking");
         }
 
         function renderMySubmissions() {
@@ -35,7 +38,15 @@
                                     <td style="padding:8px;font-family:monospace;font-size:12px;color:var(--accent)">${s.id}</td>
                                     <td style="padding:8px">${s.templateName}</td>
                                     <td style="padding:8px">${new Date(s.submittedAt).toLocaleDateString()}</td>
-                                    <td style="padding:8px"><span class="badge ${badgeClass(s.status)}">${statusLabel(s.status)}</span></td>
+                                    <td style="padding:8px">
+                                        <button
+                                            class="badge ${badgeClass(s.status)} btn-my-status-progress"
+                                            data-sub-id="${escapeHtml(s.id)}"
+                                            type="button"
+                                            style="border:none;cursor:pointer;"
+                                            title="View progress status"
+                                        >${statusLabel(s.status)}</button>
+                                    </td>
                                     <td style="padding:8px">
                                         <button class="btn btn-outline btn-sm" onclick="openMySubDetail('${s.id}')">View</button>
                                     </td>
@@ -45,6 +56,12 @@
                     </table>
                 `;
             }
+
+            el.querySelectorAll(".btn-my-status-progress").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    openMyProgressStatus(btn.dataset.subId);
+                });
+            });
         }
 
         function renderMyStats() {
@@ -110,53 +127,98 @@
             document.getElementById("my-sub-detail-modal").classList.remove("hidden");
         }
 
+        function openMyProgressStatus(id) {
+            const sub = submissions.find(s => s.id === id);
+            if (!sub) {
+                showToast("Submission not found", "error");
+                return;
+            }
+
+            const titleEl = document.getElementById("my-progress-title");
+            const bodyEl = document.getElementById("my-progress-body");
+            const modalEl = document.getElementById("my-progress-modal");
+            if (!titleEl || !bodyEl || !modalEl) return;
+
+            titleEl.textContent = `Progress Status - ${sub.id}`;
+            bodyEl.innerHTML = renderTrackingResultHtml(sub, { showEmployee: false });
+            modalEl.classList.remove("hidden");
+        }
+
         function renderMyFormList() {
             const el = document.getElementById("my-form-list");
+            const departmentEl = document.getElementById("my-form-filter-department");
             const published = templates.filter(t => t.published);
+
+            if (departmentEl) {
+                const deptIds = [...new Set(published.map(t => t.department).filter(Boolean))];
+                const deptOptions = deptIds
+                    .map(deptId => {
+                        const dept = depts.find(d => d.id === deptId);
+                        if (!dept) return null;
+                        return `<option value="${escapeHtml(dept.id)}">${escapeHtml(dept.name)} (${escapeHtml(dept.code || "-")})</option>`;
+                    })
+                    .filter(Boolean)
+                    .join("");
+                departmentEl.innerHTML = `<option value="">All Department</option>${deptOptions}`;
+                departmentEl.value = myFormDepartmentFilter || "";
+            }
+
             if (published.length === 0) {
                 el.innerHTML = '<p class="muted" style="text-align:center;padding:40px;">No published forms available.</p>';
                 return;
             }
 
-            // Group by department
-            const grouped = depts.map(d => ({
-                ...d,
-                forms: published.filter(f => f.department === d.id)
-            })).filter(g => g.forms.length > 0);
+            const filtered = published.filter(form => {
+                const byDepartment = !myFormDepartmentFilter || form.department === myFormDepartmentFilter;
+                const byName = !myFormSearchQuery || (form.name || "").toLowerCase().includes(myFormSearchQuery.toLowerCase());
+                return byDepartment && byName;
+            });
 
-            el.innerHTML = grouped.map(g => `
-                <div style="margin-bottom:16px;">
-                    <div class="dept-header" style="background:var(--primary);color:#fff;padding:12px 16px;border-radius:8px 8px 0 0;font-weight:700;display:flex;align-items:center;gap:10px;">
-                        <span>${g.name} (${g.code})</span>
-                        <span class="badge" style="margin-left:auto">${g.forms.length} form${g.forms.length > 1 ? "s" : ""}</span>
-                    </div>
-                    <div style="background:#fff;border:1px solid var(--gray-light);border-top:none;border-radius:0 0 8px 8px;">
-                        ${g.forms.map((f, fi) => `
-                            <div class="form-item" style="padding:14px 18px;cursor:pointer;border-bottom:${fi < g.forms.length - 1 ? "1px solid var(--gray-light)" : "none"};display:flex;justify-content:space-between;align-items:center;" data-form-id="${f.id}">
-                                <div>
-                                    <div style="font-weight:600;color:var(--primary);margin-bottom:2px">${f.name}</div>
-                                    <div class="muted" style="font-size:13px">${f.description || "No description"}</div>
-                                    <div style="margin-top:6px;display:flex;gap:6px;">
-                                        <span class="badge">${f.fields.length} fields</span>
-                                        ${f.fields.some(x => x.type === "table") ? '<span class="badge" style="background:#DBEAFE;color:var(--accent)">Table</span>' : ""}
-                                        ${f.fields.some(x => x.type === "calculation") ? '<span class="badge" style="background:#FEF3C7;color:var(--warn)">Calc</span>' : ""}
-                                        ${f.prerequisiteFormId ? '<span class="badge" style="background:#EDE9FE;color:#7C3AED">Has Prereq</span>' : ""}
-                                    </div>
-                                </div>
-                                <span style="color:var(--primary)">→</span>
-                            </div>
-                        `).join("")}
-                    </div>
+            if (filtered.length === 0) {
+                el.innerHTML = '<p class="muted" style="text-align:center;padding:26px;">No form matched your filter.</p>';
+                return;
+            }
+
+            el.innerHTML = `
+                <div style="overflow:auto;border:1px solid var(--gray-light);border-radius:10px;background:#fff;">
+                    <table style="width:100%;border-collapse:collapse;min-width:860px;font-size:14px;">
+                        <thead>
+                            <tr style="background:#F8FAFC;border-bottom:1px solid var(--gray-light);">
+                                <th style="text-align:left;padding:10px 12px;">Nama Form</th>
+                                <th style="text-align:left;padding:10px 12px;">Departement Penerbit</th>
+                                <th style="text-align:left;padding:10px 12px;">Description</th>
+                                <th style="text-align:left;padding:10px 12px;">Fields</th>
+                                <th style="text-align:left;padding:10px 12px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(form => {
+                                const dept = depts.find(d => d.id === form.department);
+                                return `
+                                    <tr style="border-bottom:1px solid var(--gray-light);">
+                                        <td style="padding:10px 12px;font-weight:600;color:var(--primary);">${escapeHtml(form.name || "-")}</td>
+                                        <td style="padding:10px 12px;">${escapeHtml(dept ? `${dept.name} (${dept.code || "-"})` : "-")}</td>
+                                        <td style="padding:10px 12px;" class="muted">${escapeHtml(form.description || "No description")}</td>
+                                        <td style="padding:10px 12px;">${form.fields.length}</td>
+                                        <td style="padding:10px 12px;">
+                                            <button class="btn btn-outline btn-my-open-form" data-form-id="${escapeHtml(form.id)}">Fill Form</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join("")}
+                        </tbody>
+                    </table>
                 </div>
-            `).join("");
+            `;
 
-            el.querySelectorAll("[data-form-id]").forEach(item => {
+            el.querySelectorAll(".btn-my-open-form").forEach(item => {
                 item.addEventListener("click", () => {
                     const tpl = templates.find(t => t.id === item.dataset.formId);
                     if (!tpl) return;
                     mySelectedTemplate = tpl;
                     myFormData = {};
                     myVerifiedPrerequisiteSubmissionId = null;
+                    myInternalApproverSelections = {};
                     renderMyDynamicFields();
                     document.getElementById("my-selected-form-title").textContent = tpl.name;
                     showMyView("myFillForm");
@@ -184,6 +246,8 @@
             const prereqHelp = document.getElementById("my-prereq-check-help");
             const prereqInput = document.getElementById("my-prereq-submission-id");
             const prereqResult = document.getElementById("my-prereq-check-result");
+            const internalApproverSection = document.getElementById("my-internal-approver-section");
+            const internalApproverList = document.getElementById("my-internal-approver-list");
             const submitBtn = document.getElementById("btn-my-submit-form");
 
             if (mySelectedTemplate.prerequisiteFormId) {
@@ -212,6 +276,37 @@
                 submitBtn.disabled = false;
                 submitBtn.classList.remove("hidden");
                 wrap.classList.remove("hidden");
+            }
+
+            const internalApprovalFlow = (mySelectedTemplate?.approvalFlow || []).filter(a => (a.approvalType || "internal") !== "external");
+            const approverCandidates = (users || []).filter(u => (u.role || "").toLowerCase() !== "non_admin");
+            if (internalApprovalFlow.length > 0) {
+                internalApproverSection.classList.remove("hidden");
+                if (approverCandidates.length === 0) {
+                    internalApproverList.innerHTML = `<p class="muted">No approver user available.</p>`;
+                } else {
+                    internalApproverList.innerHTML = internalApprovalFlow.map((a, i) => {
+                        const levelLabel = a.role || `Superior Level ${i + 1}`;
+                        const selectedUsername = myInternalApproverSelections[a.id] || "";
+                        return `
+                            <div style="margin-bottom:10px;">
+                                <label class="label">${escapeHtml(levelLabel)} *</label>
+                                <select class="input my-internal-approver" data-step-id="${a.id}">
+                                    <option value="">Select approver</option>
+                                    ${approverCandidates.map(u => `<option value="${escapeHtml(u.username)}" ${selectedUsername === u.username ? "selected" : ""}>${escapeHtml(u.name)} (${escapeHtml(u.username)})</option>`).join("")}
+                                </select>
+                            </div>
+                        `;
+                    }).join("");
+                    internalApproverList.querySelectorAll(".my-internal-approver").forEach(el => {
+                        el.addEventListener("change", () => {
+                            myInternalApproverSelections[el.dataset.stepId] = el.value || "";
+                        });
+                    });
+                }
+            } else {
+                internalApproverSection.classList.add("hidden");
+                internalApproverList.innerHTML = "";
             }
 
             mySelectedTemplate.fields.forEach((field) => {
@@ -327,6 +422,15 @@
                 }
             }
 
+            const internalApprovalFlow = (mySelectedTemplate.approvalFlow || []).filter(a => (a.approvalType || "internal") !== "external");
+            for (const step of internalApprovalFlow) {
+                const approverUsername = (myInternalApproverSelections[step.id] || "").trim();
+                if (!approverUsername) {
+                    showToast(`Please select approver for ${step.role || "internal step"}`, "error");
+                    return;
+                }
+            }
+
             const id = genSubId();
             const payload = {
                 id,
@@ -338,8 +442,22 @@
                 data: { ...myFormData },
                 prerequisiteSubmissionId,
                 approvalSteps: (mySelectedTemplate.approvalFlow || []).map((a, i) => ({
+                    ...(function() {
+                        const approvalType = a.approvalType === "external" ? "external" : "internal";
+                        const approverUsername = approvalType === "internal"
+                            ? (myInternalApproverSelections[a.id] || "").trim()
+                            : ((users || []).find(u => u.name === (a.role || ""))?.username || null);
+                        const approverUser = approverUsername
+                            ? (users || []).find(u => u.username === approverUsername)
+                            : null;
+                        return {
+                            approverUsername: approverUsername || null,
+                            approverName: approverUser?.name || (approvalType === "external" ? (a.role || null) : null),
+                        };
+                    })(),
                     id: a.id || `APR-${i + 1}`,
                     role: a.role || a.title || a.name || "spv",
+                    approvalType: a.approvalType === "external" ? "external" : "internal",
                     order: i,
                     status: i === 0 ? "in_review" : "pending",
                 })),
@@ -361,6 +479,7 @@
             mySelectedTemplate = null;
             myFormData = {};
             myVerifiedPrerequisiteSubmissionId = null;
+            myInternalApproverSelections = {};
             showToast(`Form submitted. Tracking ID: ${id}`);
             showMyView("myDashboard");
         }
@@ -372,6 +491,7 @@
             document.getElementById("view-my-track").classList.add("hidden");
             document.getElementById("my-subs-dashboard").style.display = "none";
             document.getElementById("my-sub-detail-modal").classList.add("hidden");
+            document.getElementById("my-progress-modal").classList.add("hidden");
 
             if (view === "myDashboard") {
                 document.getElementById("my-subs-dashboard").style.display = "block";
@@ -381,13 +501,13 @@
             } else if (view === "myFormList") {
                 document.getElementById("view-my-form-list").classList.remove("hidden");
                 renderMyFormList();
-                setMyMenuActive("submissions");
+                setMyMenuActive("submit");
             } else if (view === "myFillForm") {
                 document.getElementById("view-my-fill-form").classList.remove("hidden");
-                setMyMenuActive("submissions");
+                setMyMenuActive("submit");
             } else if (view === "myTrack") {
                 document.getElementById("view-my-track").classList.remove("hidden");
-                setMyMenuActive("tracking");
+                setMyMenuActive("submissions");
             }
         }
 
@@ -428,6 +548,7 @@
         document.getElementById("btn-my-form-back").addEventListener("click", () => {
             mySelectedTemplate = null;
             myFormData = {};
+            myInternalApproverSelections = {};
             showMyView("myFormList");
         });
 
@@ -470,11 +591,11 @@
             prereqResult.innerHTML = `<span class="muted">ID changed. Please check again.</span>`;
             renderMyDynamicFields();
         });
+        document.getElementById("btn-my-menu-submit").addEventListener("click", () => {
+            showMyView("myFormList");
+        });
         document.getElementById("btn-my-menu-subs").addEventListener("click", () => {
             showMyView("myDashboard");
-        });
-        document.getElementById("btn-my-menu-track").addEventListener("click", () => {
-            showMyView("myTrack");
         });
         document.getElementById("btn-my-track-search").addEventListener("click", () => {
             searchMyTracking();
@@ -488,6 +609,25 @@
         document.getElementById("btn-my-sub-detail-close").addEventListener("click", () => {
             document.getElementById("my-sub-detail-modal").classList.add("hidden");
         });
+        document.getElementById("btn-my-progress-close").addEventListener("click", () => {
+            document.getElementById("my-progress-modal").classList.add("hidden");
+        });
+
+        const myFormFilterDepartmentEl = document.getElementById("my-form-filter-department");
+        if (myFormFilterDepartmentEl) {
+            myFormFilterDepartmentEl.addEventListener("change", () => {
+                myFormDepartmentFilter = myFormFilterDepartmentEl.value;
+                renderMyFormList();
+            });
+        }
+
+        const myFormSearchNameEl = document.getElementById("my-form-search-name");
+        if (myFormSearchNameEl) {
+            myFormSearchNameEl.addEventListener("input", () => {
+                myFormSearchQuery = myFormSearchNameEl.value.trim();
+                renderMyFormList();
+            });
+        }
 
         // Add "Submit New Form" button to dashboard
         function renderMySubmissionsDashboard() {

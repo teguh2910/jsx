@@ -59,11 +59,16 @@
                     }
                     return;
                 }
+                if (currentUser && initialView === "mySubmissions" && currentUser.role !== "non_admin") {
+                    showView("admin", { replaceRoute: true });
+                    renderAdmin();
+                    return;
+                }
                 showView(initialView, { syncRoute: false });
                 if (currentUser && initialView === "admin") {
                     renderAdmin();
                 }
-                if (currentUser && initialView === "mySubmissions") {
+                if (currentUser && initialView === "mySubmissions" && currentUser.role === "non_admin") {
                     if (typeof showMyView === "function") showMyView("myDashboard");
                     if (typeof renderMySubmissionsDashboard === "function") renderMySubmissionsDashboard();
                 }

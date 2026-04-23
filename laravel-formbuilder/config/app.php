@@ -159,6 +159,7 @@ return [
         /*
          * Package Service Providers...
          */
+        SatuForm\FormBuilder\FormBuilderServiceProvider::class,
 
         /*
          * Application Service Providers...

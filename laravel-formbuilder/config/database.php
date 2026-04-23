@@ -89,8 +89,23 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            // 'encrypt' => env('DB_ENCRYPT', 'yes'),
-            // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+            'encrypt' => env('DB_ENCRYPT', 'yes'),
+            'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
+
+        'ais' => [
+            'driver' => 'sqlsrv',
+            'host' => env('AIS_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('AIS_DB_PORT', env('DB_PORT', '1433')),
+            'database' => env('AIS_DB_DATABASE', env('DB_DATABASE', 'forge')),
+            'username' => env('AIS_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('AIS_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => env('AIS_DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('AIS_DB_ENCRYPT', env('DB_ENCRYPT', 'no')),
+            'trust_server_certificate' => env('AIS_DB_TRUST_SERVER_CERTIFICATE', env('DB_TRUST_SERVER_CERTIFICATE', true)),
+            'schema' => env('AIS_DB_SCHEMA', 'FORM'),
         ],
 
     ],
@@ -106,7 +121,7 @@ return [
     |
     */
 
-    'migrations' => 'migrations',
+    'migrations' => 'FORM.migrations',
 
     /*
     |--------------------------------------------------------------------------
